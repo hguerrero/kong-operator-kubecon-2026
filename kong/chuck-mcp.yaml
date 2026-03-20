@@ -1,0 +1,89 @@
+kind: KongService
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: chucknorris-service
+  namespace: kong
+spec:
+  name: chucknorris-service
+  host: api.chucknorris.io
+  protocol: https
+  port: 443
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name: gateway-control-plane
+---
+kind: KongRoute
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: chucknorris-mcp-route
+  namespace: kong
+spec:
+  name: chucknorris-mcp-route
+  paths:
+  - "/mcp/chucknorris"
+  serviceRef:
+    type: namespacedRef
+    namespacedRef:
+      name: chucknorris-service
+---
+kind: KongRoute
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: chucknorris-api-route
+  namespace: kong
+spec:
+  name: chucknorris-api-route
+  paths:
+  - "/api/chucknorris"
+  serviceRef:
+    type: namespacedRef
+    namespacedRef:
+      name: chucknorris-service
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: ai-mcp-proxy-chucknorris
+  namespace: kong
+  annotations:
+    kubernetes.io/ingress.class: kong
+plugin: ai-mcp-proxy
+config:
+  logging:
+    log_payloads: true
+    log_statistics: true
+  max_request_body_size: 16384
+  mode: conversion-listener
+  tools:
+  - annotations:
+      title: Chuck Norris Random Joke
+    description: Retrieve a random chuck joke in JSON format.
+    method: GET
+    parameters:
+    - description: Retrieve a random chuck norris joke from a given category.
+      in: query
+      name: category
+      required: false
+      schema:
+        type: string
+    path: /api/chucknorris/jokes/random
+---
+kind: KongPluginBinding
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: binding-route-chucknorris-mcp-route
+  namespace: kong
+spec:
+  pluginRef:
+    kind: KongPlugin
+    name: ai-mcp-proxy-chucknorris
+  targets:
+    routeRef:
+      group: configuration.konghq.com
+      kind: KongRoute
+      name: chucknorris-mcp-route
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name: gateway-control-plane

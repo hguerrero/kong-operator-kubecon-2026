@@ -1,0 +1,29 @@
+kind: KongService
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: echo-service
+  namespace: kong
+spec:
+  name: echo-service
+  host: echo.kong.svc.cluster.local
+  port: 1027
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name:  gateway-control-plane
+---
+kind: KongRoute
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: echo-route
+  namespace: kong
+spec:
+  name: echo-route
+  protocols:
+  - http
+  paths:
+  - "/echo"
+  serviceRef:
+    type: namespacedRef
+    namespacedRef:
+      name: echo-service

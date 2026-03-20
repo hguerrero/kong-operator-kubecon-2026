@@ -1,0 +1,14 @@
+kind: KongVault
+apiVersion: configuration.konghq.com/v1alpha1
+metadata:
+  name: env-vault
+  namespace: kong
+spec:
+  backend: env
+  prefix: env-vault
+  config:
+    prefix: env-vault
+  controlPlaneRef:
+    type: konnectNamespacedRef
+    konnectNamespacedRef:
+      name: gateway-control-plane

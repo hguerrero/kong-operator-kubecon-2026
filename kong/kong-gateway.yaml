@@ -1,0 +1,48 @@
+kind: KonnectGatewayControlPlane
+apiVersion: konnect.konghq.com/v1alpha2
+metadata:
+  name: gateway-control-plane
+  namespace: kong
+spec:
+  createControlPlaneRequest:
+    name: k8s-ai-gateway
+  konnect:
+    authRef:
+      name: konnect-api-auth
+---
+kind: KonnectExtension
+apiVersion: konnect.konghq.com/v1alpha2
+metadata:
+  name: my-konnect-config
+  namespace: kong
+spec:
+  clientAuth:
+    certificateSecret:
+      provisioning: Automatic
+  konnect:
+    controlPlane:
+      ref:
+        type: konnectNamespacedRef
+        konnectNamespacedRef:
+          name: gateway-control-plane
+---
+apiVersion: gateway-operator.konghq.com/v1beta1
+kind: DataPlane
+metadata:
+  name: ai-gateway
+  namespace: kong
+spec:
+  extensions:
+  - kind: KonnectExtension
+    name: my-konnect-config
+    group: konnect.konghq.com
+  deployment:
+    podTemplateSpec:
+      spec:
+        containers:
+        - name: proxy
+          image: kong/kong-gateway:3.13
+          readinessProbe:
+            initialDelaySeconds: 1
+            periodSeconds: 1
+---
